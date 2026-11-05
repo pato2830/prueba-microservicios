@@ -282,8 +282,125 @@ Cada microservicio funciona de manera independiente y utiliza su propio servidor
 
 El Auth Service no accede directamente a PostgreSQL. La validación de credenciales y las operaciones sobre usuarios son responsabilidad exclusiva del Users Service.
 
-Las claves y configuraciones privadas no deben publicarse en el repositorio.
 
+## 12. Ejecución mediante Docker Compose
+
+El proyecto incluye soporte para Docker y Docker Compose, permitiendo ejecutar toda la arquitectura mediante contenedores independientes.
+
+### 12.1. Requisitos
+
+- Docker Desktop.
+- Docker Compose.
+
+### 12.2. Configuración
+
+Crear el archivo `.env` a partir de la plantilla:
+
+```bash
+cp .env.example .env
+```
+
+En Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configurar las siguientes variables:
+
+| Variable | Descripción |
+|---|---|
+| POSTGRES_PASSWORD | Contraseña de PostgreSQL |
+| JWT_SECRET | Secreto para firmar los tokens JWT |
+| JWT_EXPIRES_IN | Tiempo de expiración del token |
+
+Utilizar valores seguros para las credenciales y mantener el archivo `.env` fuera del repositorio.
+
+### 12.3. Construcción de imágenes
+
+Desde la raíz del proyecto ejecutar:
+
+```bash
+docker compose build
+```
+
+Este comando construye las imágenes de los servicios.
+
+### 12.4. Iniciar la aplicación
+
+Ejecutar:
+
+```bash
+docker compose up -d
+```
+
+Se iniciarán los siguientes contenedores:
+
+1. PostgreSQL.
+2. Users Service.
+3. Auth Service.
+4. Frontend.
+
+El Users Service ejecuta las migraciones de Prisma y crea el administrador inicial durante su arranque.
+
+### 12.5. Verificar los servicios
+
+Consultar el estado de los contenedores:
+
+```bash
+docker compose ps
+```
+
+Consultar los registros:
+
+```bash
+docker compose logs -f
+```
+
+Consultar los registros de un servicio específico:
+
+```bash
+docker compose logs -f users-service
+```
+
+### 12.6. Acceso a la aplicación
+
+| Componente | Dirección |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Auth Service | http://localhost:8081 |
+| Users Service | http://localhost:8082 |
+| Auth Health Check | http://localhost:8081/health |
+| Users Health Check | http://localhost:8082/health |
+
+PostgreSQL funciona dentro de la red interna de Docker y no publica su puerto en el equipo anfitrión.
+
+### 12.7. Detener la aplicación
+
+Para detener los contenedores:
+
+```bash
+docker compose down
+```
+
+Para detenerlos y eliminar también el volumen de PostgreSQL:
+
+```bash
+docker compose down -v
+```
+
+**Advertencia:** el segundo comando elimina los datos almacenados en la base de datos del contenedor.
+
+### 12.8. Arquitectura en Docker
+
+Cada componente funciona en un contenedor independiente:
+
+- PostgreSQL: almacenamiento de datos.
+- Users Service: administración de usuarios y acceso exclusivo a PostgreSQL.
+- Auth Service: autenticación y generación de tokens JWT.
+- Frontend: interfaz web servida mediante Nginx.
+
+La comunicación interna entre contenedores utiliza los nombres de los servicios definidos en `docker-compose.yml`.
 ---
 
 **Proyecto desarrollado como parte de una prueba técnica de arquitectura de microservicios.**
